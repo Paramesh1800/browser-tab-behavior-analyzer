@@ -1,35 +1,38 @@
-// Load saved risk score when popup opens
+console.log("Popup loaded");
+
 document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get(["lastRisk", "lastTriggered"], (data) => {
-    updateUI(data.lastRisk || 0, data.lastTriggered || []);
-  });
+
+    const riskEl = document.getElementById("risk-score");
+    const keywordEl = document.getElementById("keyword-list");
+    const statusBox = document.getElementById("status-box");
+
+    function updateUI(score, keywords) {
+        console.log("Updating UI with:", score, keywords);
+
+        riskEl.textContent = score;
+
+        keywordEl.textContent =
+            keywords.length > 0 ? keywords.join(", ") : "None";
+
+        if (score === 0) {
+            statusBox.style.background = "#2ecc71";
+        } else if (score < 20) {
+            statusBox.style.background = "#f1c40f";
+        } else {
+            statusBox.style.background = "#e74c3c";
+        }
+    }
+
+    chrome.storage.local.get(["lastRisk", "lastTriggered"], data => {
+        console.log("Loaded from storage:", data);
+        updateUI(data.lastRisk || 0, data.lastTriggered || []);
+    });
+
+    chrome.runtime.onMessage.addListener(msg => {
+        console.log("Message received:", msg);
+        if (msg.type === "RISK_ALERT") {
+            updateUI(msg.score, msg.keywords);
+        }
+    });
+
 });
-
-// Listen for messages from background.js (live updates)
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "RISK_ALERT") {
-    updateUI(message.score, message.keywords);
-  }
-});
-
-// Update popup UI
-function updateUI(score, keywords) {
-  const scoreEl = document.getElementById("riskScore");
-  const keywordsEl = document.getElementById("keywords");
-
-  // Update values
-  scoreEl.textContent = score;
-  keywordsEl.textContent = keywords.length ? keywords.join(", ") : "None";
-
-  // Reset classes
-  scoreEl.className = "";
-
-  // Color levels
-  if (score >= 6) {
-    scoreEl.classList.add("high");   // red
-  } else if (score >= 3) {
-    scoreEl.classList.add("medium"); // yellow
-  } else {
-    scoreEl.classList.add("low");    // green
-  }
-}

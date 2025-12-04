@@ -3,11 +3,16 @@
   "name": "Browser Tab Behavior Analyzer",
   "version": "1.0",
   "description": "Monitors browser tab behavior to detect suspicious or malware-like activity.",
-  
+
   "permissions": [
     "tabs",
     "storage",
-    "notifications"
+    "notifications",
+    "activeTab"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
   ],
 
   "background": {
@@ -18,5 +23,4 @@
     "default_popup": "popup.html",
     "default_title": "Tab Behavior Analyzer"
   }
-
 }
