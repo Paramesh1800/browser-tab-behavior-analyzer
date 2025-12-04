@@ -1,34 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tab Risk Analyzer</title>
-  <style>
-    .low {
-        color: green;
-        font-weight: bold;
-    }
-    .medium {
-        color: orange;
-        font-weight: bold;
-    }
-    .high {
-        color: red;
-        font-weight: bold;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      width: 250px;
-    }
-    .high { color: red; font-weight: bold; }
-    .medium { color: orange; font-weight: bold; }
-    .low { color: green; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Tab Risk Analyzer</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 260px;
+            padding: 15px;
+            background: #f4f4f4;
+        }
+
+        #status-box {
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            margin-bottom: 15px;
+            background: #2ecc71; /* default green */
+        }
+
+        .label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
 </head>
+
 <body>
-  <h2>Tab Risk Analyzer</h2>
-  <p>Current tab risk: <span id="riskScore">0</span></p>
-  <p>Triggered keywords: <span id="keywords">None</span></p>
+
+    <div id="status-box">
+        <h2>Risk Score: <span id="risk-score">0</span></h2>
+    </div>
+
+    <div>
+        <div class="label">Triggered Keywords:</div>
+        <div id="keyword-list">None</div>
+    </div>
+
+    <script src="popup.js"></script>
 </body>
-<script src="popup.js"></script>
 </html>
