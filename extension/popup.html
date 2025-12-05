@@ -1,31 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tab Risk Analyzer</title>
-    <link rel="stylesheet" href="popup.css">
+  <title>Tab Risk Analyzer</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      width: 260px;
+      padding: 15px;
+    }
+
+    h1 {
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    #status-box {
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    #icon-box {
+      font-size: 45px;
+      margin-bottom: 10px;
+    }
+
+    .info-label {
+      font-size: 14px;
+      margin-top: 12px;
+      font-weight: bold;
+      color: #bbbbbb;
+    }
+
+    #risk-score {
+      font-size: 26px;
+      font-weight: bold;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    #keyword-list {
+      font-size: 14px;
+      word-wrap: break-word;
+      margin-top: 5px;
+    }
+
+  </style>
 </head>
 <body>
 
-<div class="container">
+  <h1>Tab Risk Analyzer</h1>
 
-    <div id="icon-box" class="icon-safe">🔍</div>
+  <div id="status-box">
+      <div id="icon-box">🛡️</div>
+      <div id="risk-score">0</div>
+  </div>
 
-    <h2 class="title">Tab Risk Analyzer</h2>
+  <div class="info-label">Triggered Keywords:</div>
+  <div id="keyword-list">None</div>
 
-    <div id="status-text" class="status-safe">Safe</div>
+  <script src="popup.js"></script>
 
-    <div class="info-box">
-        <p class="label">Risk Score:</p>
-        <p id="risk-score" class="value">0</p>
-    </div>
-
-    <div class="info-box">
-        <p class="label">Triggered Keywords:</p>
-        <p id="keyword-list" class="value small">None</p>
-    </div>
-
-</div>
-
-<script src="popup.js"></script>
 </body>
 </html>

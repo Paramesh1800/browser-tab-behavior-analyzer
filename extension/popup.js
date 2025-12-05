@@ -1,49 +1,49 @@
 console.log("Popup loaded");
 
-const riskEl = document.getElementById("risk-score");
-const keywordEl = document.getElementById("keyword-list");
-const iconBox = document.getElementById("icon-box");
-const statusText = document.getElementById("status-text");
+document.addEventListener("DOMContentLoaded", () => {
 
-function updateUI(score, keywords) {
+    const riskEl = document.getElementById("risk-score");
+    const keywordEl = document.getElementById("keyword-list");
+    const statusBox = document.getElementById("status-box");
+    const iconBox = document.getElementById("icon-box");
 
-    // Text updates
-    riskEl.textContent = score;
-    keywordEl.textContent = keywords.length ? keywords.join(", ") : "None";
+    function updateUI(score, keywords) {
+        console.log("Updating UI with:", score, keywords);
 
-    // Reset classes
-    iconBox.className = "";
-    statusText.className = "";
+        // Update number
+        riskEl.textContent = score;
 
-    // Apply UI based on score
-    if (score === 0) {
-        iconBox.classList.add("icon-safe");
-        statusText.classList.add("status-safe");
-        iconBox.textContent = "🔍";
-        statusText.textContent = "Safe";
+        // Update triggered keywords
+        keywordEl.textContent =
+            keywords.length > 0 ? keywords.join(", ") : "None";
+
+        // Update colors + emojis
+        if (score === 0) {
+            statusBox.style.background = "#2ecc71";   // green
+            iconBox.textContent = "🛡️";              // SAFE
+        } 
+        else if (score < 20) {
+            statusBox.style.background = "#f1c40f";   // yellow
+            iconBox.textContent = "🛡️";              // shield stays
+        } 
+        else {
+            statusBox.style.background = "#e74c3c";   // red
+            iconBox.textContent = "⚡";               // THREAT
+        }
     }
-    else if (score < 20) {
-        iconBox.classList.add("icon-warning");
-        statusText.classList.add("status-warning");
-        iconBox.textContent = "⚠️";
-        statusText.textContent = "Warning";
-    }
-    else {
-        iconBox.classList.add("icon-danger");
-        statusText.classList.add("status-danger");
-        iconBox.textContent = "❌";
-        statusText.textContent = "Dangerous";
-    }
-}
 
-// Load stored values
-chrome.storage.local.get(["lastRisk", "lastTriggered"], data => {
-    updateUI(data.lastRisk || 0, data.lastTriggered || []);
-});
+    // Load from storage on open
+    chrome.storage.local.get(["lastRisk", "lastTriggered"], data => {
+        console.log("Loaded from storage:", data);
+        updateUI(data.lastRisk || 0, data.lastTriggered || []);
+    });
 
-// Live updates from background
-chrome.runtime.onMessage.addListener(msg => {
-    if (msg.type === "RISK_ALERT") {
-        updateUI(msg.score, msg.keywords);
-    }
+    // Listen for messages from background.js
+    chrome.runtime.onMessage.addListener(msg => {
+        console.log("Message received:", msg);
+        if (msg.type === "RISK_ALERT") {
+            updateUI(msg.score, msg.keywords);
+        }
+    });
+
 });
