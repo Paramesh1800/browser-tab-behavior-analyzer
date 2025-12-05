@@ -1,102 +1,91 @@
 // ------------------------------
-// 1. Suspicious keywords
+// Weighted Suspicious Keywords
 // ------------------------------
-const suspiciousKeywords = [
-  "login", "signin", "signup", "auth", "authentication", "authorize",
-  "verify", "verification", "confirm", "validate", "password", "reset",
-  "account", "unlock", "locked", "security-check", "identity", "credential",
-  "access", "session", "2fa", "otp", "mfa",
 
-  "bank", "banking", "pay", "payment", "wallet", "upi", "gpay",
-  "transaction", "refund", "withdraw", "deposit", "balance",
-  "profit", "bonus", "trading", "investment", "loan", "crypto",
-  "bitcoin", "forex", "nft", "blockchain",
-
-  "amazon", "flipkart", "myntra", "ebay", "walmart", "alibaba",
-  "aliexpress", "paypal", "stripe", "shopify", "meesho",
-
-  "facebook", "instagram", "whatsapp", "twitter", "snapchat",
-  "youtube", "tiktok", "discord", "telegram", "reddit",
-  "zoom", "microsoft", "google", "icloud", "apple",
-  "office365", "outlook", "epicgames", "steam",
-
-  "aadhar", "aadhaar", "pan", "income-tax", "epf", "pf", "lic",
-  "scholarship", "sarkar", "gov", "government", "yojana", "ration",
-  "voterid", "rc-book", "e-mandi",
-
-  "exe", "apk", "zip", "rar", "iso", "crack", "patch", "nulled",
-  "keygen", "loader", "injector", "hack", "cheat", "mod",
-  "setup", "installer", "download",
-
-  "urgent", "important", "alert", "warning", "danger",
-  "immediately", "expires", "suspend", "suspended", "violation",
-  "security-breach", "report", "claim", "prize", "winner",
-  "offer", "limited", "free", "gift", "coupon",
-
-  "secure-update", "secure-login", "updateportal", "verificationportal",
-  "sso", "support", "helpdesk", "portal", "manage", "recovery"
+// High-risk → 10 points
+const HIGH_RISK = [
+    "login", "verify", "verification", "reset", "password",
+    "bank", "banking", "upi", "wallet", "otp", "2fa", "mfa",
+    "secure-update", "updateportal", "recovery", "account",
+    "suspend", "suspended", "alert", "urgent", "prize",
+    "winner", "claim", "paypal", "icloud", "office365",
+    "gov", "government", "aadhar", "aadhaar", "pan",
+    "charity", "donate", "refund"
 ];
 
-// ------------------------------
-// 2. Risk scoring function
-// ------------------------------
+// Medium-risk → 5 points
+const MEDIUM_RISK = [
+    "download", "exe", "apk", "zip", "wallet", "crypto",
+    "bitcoin", "trading", "investment", "bonus", "offer",
+    "portal", "update", "secure", "signin", "authorize"
+];
+
+// Low-risk → 2 points
+const LOW_RISK = [
+    "support", "helpdesk", "service", "manage",
+    "signinpage", "loginpage"
+];
+
+function getKeywordScore(keyword) {
+    if (HIGH_RISK.includes(keyword)) return 10;
+    if (MEDIUM_RISK.includes(keyword)) return 5;
+    if (LOW_RISK.includes(keyword)) return 2;
+    return 0;
+}
+
+// -----------------------------------
+// Risk Checking Function (Weighted)
+// -----------------------------------
 function checkRisk(tabId, url) {
     let risk = 0;
     let triggered = [];
 
-    // Parse URL
     try {
         const urlObj = new URL(url);
-        const hostAndPath = urlObj.host + urlObj.pathname + urlObj.search;
+        const target = (urlObj.host + urlObj.pathname + urlObj.search).toLowerCase();
 
-        suspiciousKeywords.forEach(keyword => {
-            if (hostAndPath.toLowerCase().includes(keyword.toLowerCase())) {
-                risk += 5;
+        // check high-risk, medium-risk, low-risk
+        [...HIGH_RISK, ...MEDIUM_RISK, ...LOW_RISK].forEach(keyword => {
+            if (target.includes(keyword.toLowerCase())) {
+                const pts = getKeywordScore(keyword);
+                risk += pts;
+
                 if (!triggered.includes(keyword)) triggered.push(keyword);
             }
         });
+
     } catch (err) {
         console.error("Invalid URL:", url);
     }
 
-    // Save for popup refresh
-    chrome.storage.local.set({
-        lastRisk: risk,
-        lastTriggered: triggered
-    });
+    chrome.storage.local.set({ lastRisk: risk, lastTriggered: triggered });
 
-    // Send live update to popup.js
     chrome.runtime.sendMessage({
         type: "RISK_ALERT",
         score: risk,
         keywords: triggered
     });
 
-    // Optional automatic notification
-    if (risk >= 15) {
+    // notification
+    if (risk >= 25) {
         chrome.notifications.create({
             type: "basic",
-            iconUrl: "warning.png",
-            title: "⚠ Suspicious Website Detected",
-            message: `Risk: ${risk}\nKeywords: ${triggered.join(", ")}`
+            title: "⚠ High-Risk Website Detected",
+            message: `Risk: ${risk}\nKeywords: ${triggered.join(", ")}`,
+            iconUrl: "warning.png"
         });
     }
 
-    console.log(`Checked URL: ${url} → Risk: ${risk} → Keywords: ${triggered}`);
+    console.log("Checked:", url, "→ Risk:", risk, "→", triggered);
 }
 
-// ------------------------------
-// 3. Detect URL changes
-// ------------------------------
+// listeners
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete" && tab.url) {
         checkRisk(tabId, tab.url);
     }
 });
 
-// ------------------------------
-// 4. Detect tab switches
-// ------------------------------
 chrome.tabs.onActivated.addListener(activeInfo => {
     chrome.tabs.get(activeInfo.tabId, tab => {
         if (tab.url) {
