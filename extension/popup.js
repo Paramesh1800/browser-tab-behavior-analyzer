@@ -1,34 +1,47 @@
-console.log("Popup opened");
+console.log("Popup loaded");
 
 const riskEl = document.getElementById("risk-score");
 const keywordEl = document.getElementById("keyword-list");
-const statusBox = document.getElementById("status-box");
+const iconBox = document.getElementById("icon-box");
+const statusText = document.getElementById("status-text");
 
 function updateUI(score, keywords) {
 
+    // Text updates
     riskEl.textContent = score;
     keywordEl.textContent = keywords.length ? keywords.join(", ") : "None";
 
+    // Reset classes
+    iconBox.className = "";
+    statusText.className = "";
+
+    // Apply UI based on score
     if (score === 0) {
-        statusBox.style.background = "#2ecc71";
-        statusBox.textContent = "SAFE ✔";
-    } 
+        iconBox.classList.add("icon-safe");
+        statusText.classList.add("status-safe");
+        iconBox.textContent = "🔍";
+        statusText.textContent = "Safe";
+    }
     else if (score < 20) {
-        statusBox.style.background = "#f1c40f";
-        statusBox.textContent = "WARNING ⚠";
-    } 
+        iconBox.classList.add("icon-warning");
+        statusText.classList.add("status-warning");
+        iconBox.textContent = "⚠️";
+        statusText.textContent = "Warning";
+    }
     else {
-        statusBox.style.background = "#e74c3c";
-        statusBox.textContent = "DANGEROUS ❌";
+        iconBox.classList.add("icon-danger");
+        statusText.classList.add("status-danger");
+        iconBox.textContent = "❌";
+        statusText.textContent = "Dangerous";
     }
 }
 
-// Load latest data
+// Load stored values
 chrome.storage.local.get(["lastRisk", "lastTriggered"], data => {
     updateUI(data.lastRisk || 0, data.lastTriggered || []);
 });
 
-// Live updates
+// Live updates from background
 chrome.runtime.onMessage.addListener(msg => {
     if (msg.type === "RISK_ALERT") {
         updateUI(msg.score, msg.keywords);

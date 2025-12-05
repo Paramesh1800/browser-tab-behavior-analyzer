@@ -6,19 +6,24 @@
 </head>
 <body>
 
-<div class="card">
-    <h2>🔍 Tab Risk Analyzer</h2>
+<div class="container">
 
-    <div id="status-box" class="status">Safe</div>
+    <div id="icon-box" class="icon-safe">🔍</div>
 
-    <p><b>Risk Score:</b> <span id="risk-score">0</span></p>
+    <h2 class="title">Tab Risk Analyzer</h2>
 
-    <p><b>Triggered Keywords:</b></p>
-    <div id="keyword-list">None</div>
+    <div id="status-text" class="status-safe">Safe</div>
 
-    <hr>
+    <div class="info-box">
+        <p class="label">Risk Score:</p>
+        <p id="risk-score" class="value">0</p>
+    </div>
 
-    <button id="refresh">🔄 Scan Again</button>
+    <div class="info-box">
+        <p class="label">Triggered Keywords:</p>
+        <p id="keyword-list" class="value small">None</p>
+    </div>
+
 </div>
 
 <script src="popup.js"></script>
