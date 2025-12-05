@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Tab Risk Analyzer</title>
-  <style>
-    body { font-family: Arial, sans-serif; width: 300px; padding: 12px; }
-    #status-box { padding: 12px; border-radius: 8px; color: #fff; text-align:center; margin-bottom:10px; background:#2ecc71; }
-    #details { font-size: 13px; color: #222; word-break: break-word; }
-    .label { font-weight: bold; margin-top:8px; display:block; }
-  </style>
+    <title>Tab Risk Analyzer</title>
+    <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h3>Tab Risk Analyzer</h3>
-  <div id="status-box">Risk Score: <span id="risk-score">0</span></div>
-  <div><span class="label">Triggered:</span><div id="keyword-list">None</div></div>
-  <div style="margin-top:8px;"><small id="last-url"></small></div>
 
-  <script src="popup.js"></script>
+<div class="card">
+    <h2>🔍 Tab Risk Analyzer</h2>
+
+    <div id="status-box" class="status">Safe</div>
+
+    <p><b>Risk Score:</b> <span id="risk-score">0</span></p>
+
+    <p><b>Triggered Keywords:</b></p>
+    <div id="keyword-list">None</div>
+
+    <hr>
+
+    <button id="refresh">🔄 Scan Again</button>
+</div>
+
+<script src="popup.js"></script>
 </body>
 </html>
