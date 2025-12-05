@@ -1,0 +1,40 @@
+body {
+    width: 260px;
+    background: #1e1e1e;
+    color: white;
+    font-family: Arial;
+}
+
+.card {
+    padding: 15px;
+}
+
+#status-box {
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+#keyword-list {
+    padding: 5px;
+    background: #333;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #3498db;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+button:hover {
+    background: #2980b9;
+}

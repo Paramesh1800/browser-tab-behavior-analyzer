@@ -1,38 +1,36 @@
-// popup.js
 console.log("Popup opened");
 
-function updateUI(score, keywords, url) {
-  const scoreEl = document.getElementById("risk-score");
-  const kEl = document.getElementById("keyword-list");
-  const lastUrlEl = document.getElementById("last-url");
-  scoreEl.textContent = score;
-  kEl.textContent = (keywords && keywords.length) ? keywords.join(", ") : "None";
-  lastUrlEl.textContent = url ? `Last: ${url}` : "";
+const riskEl = document.getElementById("risk-score");
+const keywordEl = document.getElementById("keyword-list");
+const statusBox = document.getElementById("status-box");
 
-  const box = document.getElementById("status-box");
-  box.style.background = "#2ecc71"; // default green
-  if (score >= 75) box.style.background = "#8b0000"; // dark red
-  else if (score >= 40) box.style.background = "#e74c3c"; // red
-  else if (score >= 20) box.style.background = "#f39c12"; // orange
-  else if (score > 0) box.style.background = "#2ecc71"; // green
-  else box.style.background = "#95a5a6"; // gray-ish for 0
+function updateUI(score, keywords) {
+
+    riskEl.textContent = score;
+    keywordEl.textContent = keywords.length ? keywords.join(", ") : "None";
+
+    if (score === 0) {
+        statusBox.style.background = "#2ecc71";
+        statusBox.textContent = "SAFE ✔";
+    } 
+    else if (score < 20) {
+        statusBox.style.background = "#f1c40f";
+        statusBox.textContent = "WARNING ⚠";
+    } 
+    else {
+        statusBox.style.background = "#e74c3c";
+        statusBox.textContent = "DANGEROUS ❌";
+    }
 }
 
-// Ask background for last stored values
-chrome.runtime.sendMessage({ type: "REQUEST_LAST" }, (response) => {
-  if (response) {
-    updateUI(response.lastRisk || 0, response.lastTriggered || [], response.lastUrl || "");
-  } else {
-    // fallback to storage read
-    chrome.storage.local.get(["lastRisk","lastTriggered","lastUrl"], (d) => {
-      updateUI(d.lastRisk || 0, d.lastTriggered || [], d.lastUrl || "");
-    });
-  }
+// Load latest data
+chrome.storage.local.get(["lastRisk", "lastTriggered"], data => {
+    updateUI(data.lastRisk || 0, data.lastTriggered || []);
 });
 
-// Listen for live messages
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg && msg.type === "RISK_ALERT") {
-    updateUI(msg.score || 0, msg.keywords || [], msg.url || "");
-  }
+// Live updates
+chrome.runtime.onMessage.addListener(msg => {
+    if (msg.type === "RISK_ALERT") {
+        updateUI(msg.score, msg.keywords);
+    }
 });
