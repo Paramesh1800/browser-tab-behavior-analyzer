@@ -5,12 +5,12 @@
   "description": "Monitors browser tab behavior to detect suspicious or malware-like activity.",
 
   "permissions": [
-    "tabs",
-    "storage",
-    "notifications",
-    "activeTab"
+  "tabs",
+  "storage",
+  "notifications",
+  "activeTab",
+  "downloads"
   ],
-
   "host_permissions": [
     "<all_urls>"
   ],
