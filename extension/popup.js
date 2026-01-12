@@ -9,7 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateUI(score, keywords) {
         console.log("Updating UI with:", score, keywords);
         riskEl.textContent = score;
-        keywordEl.textContent = keywords.length > 0 ? keywords.join(", ") : "None";
+        if (keywords.includes("whitelisted")) {
+            keywordEl.textContent = "Trusted Domain";
+        } else {
+            keywordEl.textContent = keywords.length > 0 ? keywords.join(", ") : "None";
+        }
 
         if (score === 0) {
             statusBox.style.background = "#2ecc71";   // green

@@ -11,8 +11,14 @@ const SAFE_DOMAINS = [
   "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com"
 ];
 
-const HIGH_RISK_KEYWORDS = ["update", "verify", "antivirus", "malicious", "signin", "bank", "crypto", "bit-coin", "wallet-recovery"];
-const MEDIUM_RISK_KEYWORDS = ["secure", "portal", "helpdesk", "login", "support", "account", "billing", "payment"];
+const HIGH_RISK_KEYWORDS = [
+  "update", "verify", "antivirus", "malicious", "signin", "bank", "crypto", "bit-coin", "wallet-recovery",
+  "exe", "msi", "apk", "bat", "cmd", "scr", "jar", "install", "download", "now", "free-gift", "prize", "winner"
+];
+const MEDIUM_RISK_KEYWORDS = [
+  "secure", "portal", "helpdesk", "login", "support", "account", "billing", "payment",
+  "net", "zip", "online", "urls", "center", "edu", "service", "free", "claim"
+];
 
 function clampRisk(val) {
   return Math.max(0, Math.min(100, val));
