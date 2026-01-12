@@ -8,16 +8,17 @@ const THRESHOLD_BLOCK = 80;
 const SAFE_DOMAINS = [
   "google.com", "google.co.in", "github.com", "stackoverflow.com",
   "youtube.com", "facebook.com", "microsoft.com", "apple.com",
-  "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com"
+  "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com", "owasp.org"
 ];
 
 const HIGH_RISK_KEYWORDS = [
   "update", "verify", "antivirus", "malicious", "signin", "bank", "crypto", "bit-coin", "wallet-recovery",
-  "exe", "msi", "apk", "bat", "cmd", "scr", "jar", "install", "download", "now", "free-gift", "prize", "winner"
+  "exe", "msi", "apk", "bat", "cmd", "scr", "jar", "install", "download", "now", "free-gift", "prize", "winner",
+  "juice-shop", "vulnerable", "exploit", "hack", "attack"
 ];
 const MEDIUM_RISK_KEYWORDS = [
   "secure", "portal", "helpdesk", "login", "support", "account", "billing", "payment",
-  "net", "zip", "online", "urls", "center", "edu", "service", "free", "claim"
+  "net", "zip", "online", "urls", "center", "edu", "service", "free", "claim", "shop"
 ];
 
 function clampRisk(val) {
@@ -227,8 +228,26 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
 // Listener: Respond to manual analysis requests from the popup
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "ANALYZE_CURRENT_URL" && msg.url) {
-    const { risk, triggered } = scoreUrl(msg.url);
-    sendResponse({ score: risk, keywords: triggered });
+    // If the popup is opened while on the WARNING page
+    if (msg.url.includes(chrome.runtime.getURL("warning.html"))) {
+      try {
+        const urlObj = new URL(msg.url);
+        const params = new URLSearchParams(urlObj.search);
+        const originalUrl = params.get("orig") || "Blocked Page";
+        const score = parseInt(params.get("r")) || THRESHOLD_BLOCK;
+
+        // Re-analyze original URL to get keywords
+        const { triggered } = scoreUrl(originalUrl);
+        if (!triggered.includes("blocked-content")) triggered.push("blocked-content");
+
+        sendResponse({ score: score, keywords: triggered });
+      } catch (e) {
+        sendResponse({ score: THRESHOLD_BLOCK, keywords: ["blocked-content"] });
+      }
+    } else {
+      const { risk, triggered } = scoreUrl(msg.url);
+      sendResponse({ score: risk, keywords: triggered });
+    }
   }
   return true; // Keep the message channel open for async response
 });
