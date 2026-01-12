@@ -2,6 +2,77 @@
 // Auto-download detection patch
 // -----------------------------
 
+const THRESHOLD_BLOCK = 80;
+
+// Whitelist of trusted domains to skip analysis
+const SAFE_DOMAINS = [
+  "google.com", "google.co.in", "github.com", "stackoverflow.com",
+  "youtube.com", "facebook.com", "microsoft.com", "apple.com",
+  "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com"
+];
+
+const HIGH_RISK_KEYWORDS = ["update", "verify", "antivirus", "malicious", "signin", "bank", "crypto", "bit-coin", "wallet-recovery"];
+const MEDIUM_RISK_KEYWORDS = ["secure", "portal", "helpdesk", "login", "support", "account", "billing", "payment"];
+
+function clampRisk(val) {
+  return Math.max(0, Math.min(100, val));
+}
+
+function containsAny(str, keywords) {
+  if (!str) return false;
+  str = str.toLowerCase();
+  return keywords.some(k => str.includes(k));
+}
+
+function scoreUrl(urlStr) {
+  let risk = 0;
+  const triggered = [];
+  if (!urlStr) return { risk, triggered };
+
+  try {
+    const url = new URL(urlStr);
+    const hostname = url.hostname.toLowerCase();
+    const path = url.pathname.toLowerCase();
+
+    // 1. Check Whitelist
+    if (SAFE_DOMAINS.some(domain => hostname === domain || hostname.endsWith("." + domain))) {
+      return { risk: 0, triggered: ["whitelisted"] };
+    }
+
+    // 2. Score Hostname & Path
+    const fullStringToTest = hostname + path;
+
+    for (const k of HIGH_RISK_KEYWORDS) {
+      if (fullStringToTest.includes(k)) {
+        risk += 25;
+        triggered.push(k);
+      }
+    }
+
+    for (const k of MEDIUM_RISK_KEYWORDS) {
+      if (fullStringToTest.includes(k)) {
+        risk += 15;
+        triggered.push(k);
+      }
+    }
+
+    // 3. (Optional) Check for IP-based URLs - removed to prevent false positives for local dev
+    /*
+    const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+    if (ipRegex.test(hostname)) {
+      risk += 30;
+      triggered.push("ip-address");
+    }
+    */
+
+  } catch (e) {
+    // If URL parsing fails, score 0 to be safe
+    return { risk: 0, triggered: [] };
+  }
+
+  return { risk: clampRisk(risk), triggered };
+}
+
 // Dangerous file extensions (case-insensitive)
 const DANGEROUS_EXT = [".exe", ".msi", ".apk", ".bat", ".cmd", ".scr", ".jar", ".js"];
 
@@ -47,7 +118,7 @@ function handleDangerousDownload(downloadItem) {
         }
 
         const newRisk = clampRisk(base + DOWNLOAD_RISK_BOOST);
-        const triggered = (function(){
+        const triggered = (function () {
           try {
             const res = scoreUrl(url);
             return res.triggered || [];
@@ -65,7 +136,7 @@ function handleDangerousDownload(downloadItem) {
         // desktop notification
         chrome.notifications.create({
           type: "basic",
-          iconUrl: "icon48.png",
+          iconUrl: "icon128.png",
           title: "Automatic download detected",
           message: `A file (${filename}) was downloaded from ${tab.url} — risk increased to ${newRisk}`
         });
@@ -90,7 +161,7 @@ function handleDangerousDownload(downloadItem) {
 // Generic fallback when we don't have a tab id
 function boostGlobalRiskAndNotify(filename, tabId) {
   // load lastRisk and increase
-  chrome.storage.local.get(["lastRisk","lastTriggered","lastUrl"], data => {
+  chrome.storage.local.get(["lastRisk", "lastTriggered", "lastUrl"], data => {
     const base = data.lastRisk || 0;
     const triggered = data.lastTriggered || [];
     const url = data.lastUrl || "";
@@ -104,7 +175,7 @@ function boostGlobalRiskAndNotify(filename, tabId) {
 
     chrome.notifications.create({
       type: "basic",
-      iconUrl: "icon48.png",
+      iconUrl: "icon128.png",
       title: "Automatic download detected",
       message: `A file (${filename}) was downloaded — risk increased to ${newRisk}`
     });
@@ -118,7 +189,7 @@ function boostGlobalRiskAndNotify(filename, tabId) {
               const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(url) + "&r=" + newRisk;
               chrome.tabs.update(t.id, { url: warningUrl });
             }
-          } catch(e) {}
+          } catch (e) { }
         }
       });
     }
@@ -144,6 +215,46 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
     }
   } catch (err) {
     console.error("downloads.onCreated handler error:", err);
+  }
+});
+
+// Listener: Respond to manual analysis requests from the popup
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "ANALYZE_CURRENT_URL" && msg.url) {
+    const { risk, triggered } = scoreUrl(msg.url);
+    sendResponse({ score: risk, keywords: triggered });
+  }
+  return true; // Keep the message channel open for async response
+});
+
+// Listener: react to tab URL updates (navigation)
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  // Only trigger on completed loads and non-chrome internal pages
+  if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
+    const { risk, triggered } = scoreUrl(tab.url);
+
+    // Save to storage so the popup can show the latest state
+    chrome.storage.local.set({ lastRisk: risk, lastTriggered: triggered, lastUrl: tab.url }, () => {
+      // Notify the popup if it is open
+      chrome.runtime.sendMessage({ type: "RISK_ALERT", score: risk, keywords: triggered, url: tab.url }).catch(() => {
+        // Ignore error if popup is not open
+      });
+    });
+
+    // If risk score hits the block threshold (80+), redirect to warning page
+    if (risk >= THRESHOLD_BLOCK) {
+      console.warn("High risk URL blocked:", tab.url, "Score:", risk);
+      const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(tab.url) + "&r=" + risk;
+      chrome.tabs.update(tabId, { url: warningUrl });
+
+      // Also show a notification
+      chrome.notifications.create({
+        type: "basic",
+        iconUrl: "icon128.png",
+        title: "Malicious Page Blocked",
+        message: `The site at ${tab.url} reached a risk score of ${risk} and was blocked.`
+      });
+    }
   }
 });
 
