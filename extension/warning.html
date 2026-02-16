@@ -116,9 +116,12 @@
         const params = new URLSearchParams(window.location.search);
         const url = params.get('orig') || 'Unknown URL';
         const score = params.get('r') || 'Unknown';
+        const keywords = params.get('k') || 'Analysis complete';
+
         document.getElementById('details').innerHTML = `
             <strong>URL:</strong> ${url}<br>
-            <strong>Risk Score:</strong> ${score}/100
+            <strong>Risk Score:</strong> ${score}/100<br>
+            <strong>Triggers:</strong> ${keywords}
         `;
     </script>
 </body>

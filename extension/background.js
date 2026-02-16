@@ -150,7 +150,7 @@ function handleDangerousDownload(downloadItem) {
 
         // If newRisk exceeds block threshold, redirect the tab to warning page
         if (newRisk >= THRESHOLD_BLOCK && possibleTabId !== null) {
-          const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(url) + "&r=" + newRisk;
+          const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(url) + "&r=" + newRisk + "&k=" + encodeURIComponent(triggered.join(","));
           chrome.tabs.update(possibleTabId, { url: warningUrl }, () => {
             if (chrome.runtime.lastError) console.warn("tabs.update error:", chrome.runtime.lastError.message);
           });
@@ -193,7 +193,7 @@ function boostGlobalRiskAndNotify(filename, tabId) {
         for (const t of tabs) {
           try {
             if (t.url && t.url.indexOf(url) === 0) {
-              const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(url) + "&r=" + newRisk;
+              const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(url) + "&r=" + newRisk + "&k=" + encodeURIComponent(triggered.join(","));
               chrome.tabs.update(t.id, { url: warningUrl });
             }
           } catch (e) { }
@@ -269,7 +269,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // If risk score hits the block threshold (80+), redirect to warning page
     if (risk >= THRESHOLD_BLOCK) {
       console.warn("High risk URL blocked:", tab.url, "Score:", risk);
-      const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(tab.url) + "&r=" + risk;
+      const warningUrl = chrome.runtime.getURL("warning.html") + "?orig=" + encodeURIComponent(tab.url) + "&r=" + risk + "&k=" + encodeURIComponent(triggered.join(","));
       chrome.tabs.update(tabId, { url: warningUrl });
 
       // Also show a notification
