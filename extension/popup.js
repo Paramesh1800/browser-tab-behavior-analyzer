@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (score === 0) {
             mainIndicatorEl.textContent = "Safe";
-            statusTextEl.textContent = "Verified";
+            statusTextEl.textContent = keywords.includes("whitelisted") ? "Trusted" : "No Risks Detected";
             riskMeterEl.style.stroke = "var(--accent-safe)";
         } else if (score < 50) {
             mainIndicatorEl.textContent = "Mild";
