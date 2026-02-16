@@ -8,13 +8,16 @@ const THRESHOLD_BLOCK = 80;
 const SAFE_DOMAINS = [
   "google.com", "google.co.in", "github.com", "stackoverflow.com",
   "youtube.com", "facebook.com", "microsoft.com", "apple.com",
-  "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com", "owasp.org"
+  "amazon.com", "wikipedia.org", "gmail.com", "linkedin.com", "owasp.org",
+  "tryhackme.com", "hackthebox.com", "hackthebox.eu", "hackerrank.com",
+  "leetcode.com", "geeksforgeeks.org", "coursera.org", "udemy.com",
+  "medium.com", "dev.to", "reddit.com", "twitter.com"
 ];
 
 const HIGH_RISK_KEYWORDS = [
   "update", "verify", "antivirus", "malicious", "signin", "bank", "crypto", "bit-coin", "wallet-recovery",
   "exe", "msi", "apk", "bat", "cmd", "scr", "jar", "install", "download", "now", "free-gift", "prize", "winner",
-  "juice-shop", "vulnerable", "vuln", "exploit", "hack", "attack", "malware", "phish", "virus", "bypass"
+  "juice-shop", "vulnerable", "vuln", "exploit", "hack", "attack", "malware", "phish", "virus", "bypass", "vulnweb", "webappsecurity"
 ];
 const MEDIUM_RISK_KEYWORDS = [
   "secure", "security", "portal", "helpdesk", "login", "support", "account", "billing", "payment",
@@ -32,6 +35,7 @@ function containsAny(str, keywords) {
 }
 
 function scoreUrl(urlStr) {
+  const VERSION = "1.1.2"; // Used to verify if the extension reloaded
   let risk = 0;
   const triggered = [];
   if (!urlStr) return { risk, triggered };
@@ -40,44 +44,49 @@ function scoreUrl(urlStr) {
     const url = new URL(urlStr);
     const hostname = url.hostname.toLowerCase();
     const path = url.pathname.toLowerCase();
+    const search = url.search.toLowerCase();
 
-    // 1. Check Whitelist
-    if (SAFE_DOMAINS.some(domain => hostname === domain || hostname.endsWith("." + domain))) {
-      return { risk: 0, triggered: ["whitelisted"] };
+    // Test the entire URL string to catch matches anywhere
+    const fullTestString = urlStr.toLowerCase();
+
+    console.log(`[Analyzer v${VERSION}] Scoring URL:`, urlStr);
+
+    // 1. Check Whitelist (Must be exact domain or subdomain)
+    for (const domain of SAFE_DOMAINS) {
+      if (hostname === domain || hostname.endsWith("." + domain)) {
+        console.log(`[Analyzer v${VERSION}] URL is whitelisted: ${domain}`);
+        return { risk: 0, triggered: ["whitelisted"] };
+      }
     }
 
-    // 2. Score Hostname & Path
-    const fullStringToTest = hostname + path;
-
-    for (const k of HIGH_RISK_KEYWORDS) {
-      if (fullStringToTest.includes(k)) {
+    // 2. Score with improved visibility
+    HIGH_RISK_KEYWORDS.forEach(k => {
+      if (fullTestString.indexOf(k.toLowerCase()) !== -1) {
+        console.log(`[Analyzer v${VERSION}] Hit High Risk: ${k}`);
         risk += 25;
         triggered.push(k);
       }
-    }
+    });
 
-    for (const k of MEDIUM_RISK_KEYWORDS) {
-      if (fullStringToTest.includes(k)) {
-        risk += 15;
-        triggered.push(k);
+    MEDIUM_RISK_KEYWORDS.forEach(k => {
+      if (fullTestString.indexOf(k.toLowerCase()) !== -1) {
+        // Prevent double tagging if high risk already caught it
+        if (!triggered.includes(k)) {
+          console.log(`[Analyzer v${VERSION}] Hit Medium Risk: ${k}`);
+          risk += 15;
+          triggered.push(k);
+        }
       }
-    }
-
-    // 3. (Optional) Check for IP-based URLs - removed to prevent false positives for local dev
-    /*
-    const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-    if (ipRegex.test(hostname)) {
-      risk += 30;
-      triggered.push("ip-address");
-    }
-    */
+    });
 
   } catch (e) {
-    // If URL parsing fails, score 0 to be safe
+    console.error(`[Analyzer v${VERSION}] URL Parse Error:`, e);
     return { risk: 0, triggered: [] };
   }
 
-  return { risk: clampRisk(risk), triggered };
+  const finalRisk = clampRisk(risk);
+  console.log(`[Analyzer v${VERSION}] Final Score: ${finalRisk}, Triggers: ${triggered.join(", ")}`);
+  return { risk: finalRisk, triggered };
 }
 
 // Dangerous file extensions (case-insensitive)
@@ -227,6 +236,7 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
 
 // Listener: Respond to manual analysis requests from the popup
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  console.log("Background received message:", msg);
   if (msg.type === "ANALYZE_CURRENT_URL" && msg.url) {
     // If the popup is opened while on the WARNING page
     if (msg.url.includes(chrome.runtime.getURL("warning.html"))) {

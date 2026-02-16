@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0] && tabs[0].url) {
                 chrome.runtime.sendMessage({ type: "ANALYZE_CURRENT_URL", url: tabs[0].url }, (response) => {
+                    console.log("Response from background for URL", tabs[0].url, ":", response);
                     if (response) {
                         updateUI(response.score, response.keywords, tabs[0].url);
                     }
