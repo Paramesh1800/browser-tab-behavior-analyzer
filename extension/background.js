@@ -137,7 +137,7 @@ function handleDangerousDownload(downloadItem) {
 
         // persist and notify
         chrome.storage.local.set({ lastRisk: newRisk, lastTriggered: triggered, lastUrl: url }, () => {
-          chrome.runtime.sendMessage({ type: "RISK_ALERT", score: newRisk, keywords: triggered, url });
+          chrome.runtime.sendMessage({ type: "RISK_ALERT", score: newRisk, keywords: triggered, url }).catch(() => { });
         });
 
         // desktop notification
@@ -177,7 +177,7 @@ function boostGlobalRiskAndNotify(filename, tabId) {
     if (!triggered.includes("auto-download")) triggered.push("auto-download");
 
     chrome.storage.local.set({ lastRisk: newRisk, lastTriggered: triggered, lastUrl: url }, () => {
-      chrome.runtime.sendMessage({ type: "RISK_ALERT", score: newRisk, keywords: triggered, url });
+      chrome.runtime.sendMessage({ type: "RISK_ALERT", score: newRisk, keywords: triggered, url }).catch(() => { });
     });
 
     chrome.notifications.create({
