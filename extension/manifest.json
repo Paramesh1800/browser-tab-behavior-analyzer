@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Browser Tab Behavior Analyzer",
+  "name": "Aegis",
   "version": "1.0",
-  "description": "Monitors browser tab behavior to detect suspicious or malware-like activity.",
+  "description": "Premium behavioral tab protection with the watchful eye of Aegis.",
   "permissions": [
     "tabs",
     "storage",
@@ -18,7 +18,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Tab Behavior Analyzer"
+    "default_title": "Aegis Protection"
   },
   "icons": {
     "128": "icon128.png"

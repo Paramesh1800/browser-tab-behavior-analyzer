@@ -46,8 +46,18 @@ header {
   gap: 10px;
 }
 
-.logo-icon {
-  font-size: 20px;
+.aegis-logo-container {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aegis-shield-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 5px rgba(0, 242, 255, 0.3));
 }
 
 h1 {
